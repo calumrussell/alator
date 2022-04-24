@@ -11,9 +11,6 @@ pub struct PortfolioCalculator;
 
 impl PortfolioCalculator {
     fn annualize_returns(ret: f64, periods: i32, frequency: &DataFrequency) -> f64 {
-        //Need to work out whether we are always using cumulative returns here
-        //The confusion about the maths has come from using formulas that are daily average
-        //returns...I think we are always using cum returns.
         match frequency {
             DataFrequency::Daily => ((1.0 + ret).powf(252_f64 / periods as f64)) - 1.0,
             DataFrequency::Monthly => ((1.0 + ret).powf(1.0 / (periods as f64 / 12_f64))) - 1.0,
@@ -35,6 +32,7 @@ pub struct PortfolioPerformance {
     values: TimeSeries,
     states: Vec<PortfolioState>,
     freq: DataFrequency,
+    cash_flow: Vec<f64>,
 }
 
 pub struct PerfStruct {
@@ -96,6 +94,7 @@ impl PortfolioPerformance {
 
     pub fn update(&mut self, state: &PortfolioState) {
         self.values.append(None, state.value);
+
         let copy_state = state.clone();
         self.states.push(copy_state);
     }
@@ -105,6 +104,7 @@ impl PortfolioPerformance {
             values: TimeSeries::new::<f64>(None, Vec::new()),
             states: Vec::new(),
             freq: DataFrequency::Yearly,
+            cash_flow: Vec::new(),
         }
     }
 
@@ -113,6 +113,7 @@ impl PortfolioPerformance {
             values: TimeSeries::new::<f64>(None, Vec::new()),
             states: Vec::new(),
             freq: DataFrequency::Monthly,
+            cash_flow: Vec::new(),
         }
     }
 
@@ -121,6 +122,7 @@ impl PortfolioPerformance {
             values: TimeSeries::new::<f64>(None, Vec::new()),
             states: Vec::new(),
             freq: DataFrequency::Daily,
+            cash_flow: Vec::new(),
         }
     }
 }
@@ -225,7 +227,7 @@ mod tests {
         let mut perf = PortfolioPerformance::yearly();
 
         let mut brkr = setup();
-        brkr.deposit_cash(100_000.00);
+        brkr.deposit_cash(100_00_u64);
 
         let mut target_weights: HashMap<String, f64> = HashMap::new();
         target_weights.insert(String::from("ABC"), 0.5);
